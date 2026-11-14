@@ -1,0 +1,14 @@
+LOG,0.0,inicio,
+LOG,5.0,erro_d1,1.00
+LOG,10.0,erro_d1,1.00;continua
+LOG,17.4,dica,1-1
+LOG,22.4,etapa_concluida,etapa=1;duracao_s=22;episodios_erro=1
+LOG,23.4,erro_d2,fora_high
+LOG,28.4,erro_d2,fora_high;continua
+LOG,33.6,erro_d2,dentro_low;continua
+LOG,40.1,etapa_concluida,etapa=2;duracao_s=17;episodios_erro=1
+LOG,40.9,erro_d3,esperado=VRWKG;recebido=ABCDE
+LOG,50.9,erro_d3,esperado=JRQQN;recebido=ABCDE;continua
+LOG,59.4,erro_d3,atraso;continua
+LOG,61.1,etapa_concluida,etapa=3;duracao_s=20;episodios_erro=1
+LOG,61.9,vitoria,restante_s=2458;dicas=1
