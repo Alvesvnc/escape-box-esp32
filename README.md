@@ -130,6 +130,10 @@ O potenciômetro do Wokwi vai de 0 a 1023 na interface; o valor 600 corresponde 
 O resultado de cada caso de teste está em `simulacao_wokwi/resultados/casos_de_teste.md`, com os logs das partidas na mesma pasta.
 
 
+## Artigo
+
+O projeto é descrito no artigo "Escape Box com ESP32 para o ensino introdutório de sistemas embarcados: projeto de um jogo educacional orientado por Design Science Research", de Vinicius Alves da Costa e Mário Sérgio Cavalcante (FUCAPI), submetido à Revista FT em novembro de 2026.
+
 ## Licença
 
 O código (pastas `mestre/`, `aluno_modelo/`, `gabarito/` e `simulacao_wokwi/`) está sob a licença MIT, no arquivo `LICENSE`. A documentação, o roteiro de aplicação e as figuras (pasta `docs/` e este README) estão sob a licença Creative Commons Atribuição 4.0 Internacional (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/deed.pt_BR. Nos dois casos, o uso, a adaptação e a redistribuição são livres, desde que o crédito ao autor seja mantido.
