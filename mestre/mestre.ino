@@ -264,9 +264,19 @@ void loopD1() {
       feedbackErro();
     }
   }
+  // Sinal parado por mais de 2 s depois de ja ter oscilado (pino fixo ou
+  // programa travado): um registro no log, sem bip, porque no inicio da
+  // etapa o sinal parado e normal e um alarme continuo atrapalharia.
+  static bool semSinal = false;
   if (micros() - ultimaSubida > 2000000UL) {
     ciclosOk = 0;
     setStatus("Sem oscilacao");
+    if (ultimaSubida != 0 && !semSinal) {
+      semSinal = true;
+      logErro(0, "erro_d1", "sem_oscilacao");
+    }
+  } else {
+    semSinal = false;
   }
 }
 

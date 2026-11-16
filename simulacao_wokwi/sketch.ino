@@ -12,10 +12,11 @@
  *
  * Cenarios da placa da equipe (digite o numero no Monitor Serial):
  *   0 sem codigo (pino como entrada)     5 pino alternando rapido sem ler o pot
- *   1 desafio 1 correto (2 Hz)           6 desafio 3 correto (decifra)
+ *   1 gabarito do desafio 1 (2 Hz)       6 gabarito do desafio 3
  *   2 desafio 1 errado (1 Hz)            7 desafio 3 resposta fixa
  *   3 pino fixo em nivel alto            8 desafio 3 resposta atrasada (3,5 s)
- *   4 desafio 2 correto
+ *   4 gabarito do desafio 2
+ * Os cenarios 1, 4 e 6 rodam o codigo do gabarito.ino sem alteracao.
  * Instrumentacao so da simulacao: T reduz o tempo restante para 10 s.
  *
  * ---------------------------------------------------------------------------
@@ -291,9 +292,19 @@ void loopD1() {
       feedbackErro();
     }
   }
+  // Sinal parado por mais de 2 s depois de ja ter oscilado (pino fixo ou
+  // programa travado): um registro no log, sem bip, porque no inicio da
+  // etapa o sinal parado e normal e um alarme continuo atrapalharia.
+  static bool semSinal = false;
   if (micros() - ultimaSubida > 2000000UL) {
     ciclosOk = 0;
     setStatus("Sem oscilacao");
+    if (ultimaSubida != 0 && !semSinal) {
+      semSinal = true;
+      logErro(0, "erro_d1", "sem_oscilacao");
+    }
+  } else {
+    semSinal = false;
   }
 }
 
@@ -562,19 +573,66 @@ const int EQ_RX1   = 5;
 const int EQ_TX1   = 4;
 
 const char* NOME_CENARIO[] = {
-  "sem codigo (pino como entrada)", "desafio 1 correto (2 Hz)",
+  "sem codigo (pino como entrada)", "gabarito, desafio 1",
   "desafio 1 errado (1 Hz)", "pino fixo em nivel alto",
-  "desafio 2 correto", "pino alternando rapido sem ler o pot",
-  "desafio 3 correto", "desafio 3 resposta fixa", "desafio 3 resposta atrasada"
+  "gabarito, desafio 2", "pino alternando rapido sem ler o pot",
+  "gabarito, desafio 3", "desafio 3 resposta fixa", "desafio 3 resposta atrasada"
 };
 
-// Mesmo algoritmo que a equipe escreve na funcao decifrar() do modelo
+// Usado so nos cenarios 7 e 8 (respostas erradas ou atrasadas de proposito)
 String decifrarEquipe(const String& cifrado) {
   String r = "";
   for (unsigned int i = 0; i < cifrado.length(); i++)
     r += char((cifrado[i] - 'A' - 7 + 26) % 26 + 'A');
   return r;
 }
+
+// ---- Codigo do gabarito.ino (desafios 1, 2 e 3), copiado sem alteracao ----
+// Unica adaptacao: no hardware real a placa da equipe fala com a caixa pela
+// Serial2 (pinos 16/17). Aqui esses pinos sao do mestre, entao a Serial2 do
+// gabarito e redirecionada para a Serial1 da tarefa da equipe (pinos 5/4).
+#define Serial2 Serial1
+namespace gabarito {   // isola os nomes do gabarito dos nomes do mestre
+const int PINO_SINAL = 23;
+const int PINO_POT   = 34;
+const int FAIXA_MIN  = 2000;
+const int FAIXA_MAX  = 2800;
+const int DESLOC     = 7;
+
+void desafio1() {
+  // 2 Hz: periodo de 500 ms
+  digitalWrite(PINO_SINAL, HIGH);
+  delay(250);
+  digitalWrite(PINO_SINAL, LOW);
+  delay(250);
+}
+
+void desafio2() {
+  int v = analogRead(PINO_POT);
+  if (v >= FAIXA_MIN && v <= FAIXA_MAX) digitalWrite(PINO_SINAL, HIGH);
+  else digitalWrite(PINO_SINAL, LOW);
+  Serial.println(v);   // util para calibrar contra a leitura do mestre
+  delay(10);
+}
+
+void desafio3() {
+  if (Serial2.available()) {
+    String linha = Serial2.readStringUntil('\n');
+    linha.trim();
+    if (linha.startsWith("MSG:")) {
+      String cifra = linha.substring(4);
+      String resposta = "";
+      for (unsigned int i = 0; i < cifra.length(); i++) {
+        resposta += char((cifra[i] - 'A' - DESLOC + 26) % 26 + 'A');
+      }
+      Serial2.println(resposta);
+      Serial.println(cifra + " -> " + resposta);
+    }
+  }
+}
+}  // namespace gabarito
+#undef Serial2
+// ---- fim do codigo do gabarito ----
 
 void tarefaEquipe(void*) {
   Serial1.begin(9600, SERIAL_8N1, EQ_RX1, EQ_TX1);
@@ -592,33 +650,26 @@ void tarefaEquipe(void*) {
     }
     switch (c) {
       case 0: vTaskDelay(pdMS_TO_TICKS(50)); break;
-      case 1:
-        digitalWrite(EQ_SINAL, HIGH); vTaskDelay(pdMS_TO_TICKS(250));
-        digitalWrite(EQ_SINAL, LOW);  vTaskDelay(pdMS_TO_TICKS(250));
-        break;
+      case 1: gabarito::desafio1(); break;
       case 2:
         digitalWrite(EQ_SINAL, HIGH); vTaskDelay(pdMS_TO_TICKS(500));
         digitalWrite(EQ_SINAL, LOW);  vTaskDelay(pdMS_TO_TICKS(500));
         break;
       case 3: digitalWrite(EQ_SINAL, HIGH); vTaskDelay(pdMS_TO_TICKS(50)); break;
-      case 4: {
-        int v = analogRead(EQ_POT);
-        digitalWrite(EQ_SINAL, (v >= 2000 && v <= 2800) ? HIGH : LOW);
-        vTaskDelay(pdMS_TO_TICKS(10));
-        break;
-      }
+      case 4: gabarito::desafio2(); break;
       case 5:
         nivel = !nivel; digitalWrite(EQ_SINAL, nivel);
         vTaskDelay(pdMS_TO_TICKS(37));
         break;
-      default:  // 6, 7 e 8: desafio 3
+      case 6: gabarito::desafio3(); vTaskDelay(pdMS_TO_TICKS(5)); break;
+      default:  // 7 e 8: desafio 3 com respostas erradas
         while (Serial1.available()) {
           char ch = Serial1.read();
           if (ch == '\n') {
             linha.trim();
             if (linha.startsWith("MSG:")) {
               String cifrado = linha.substring(4);
-              String resp = (c == 7) ? String("ABCDE") : decifrarEquipe(cifrado);
+              String resp = (c == 7) ? String("ABCDE") : decifrarEquipe(cifrado);  // 7 fixa, 8 atrasada
               if (c == 8) vTaskDelay(pdMS_TO_TICKS(3500));
               Serial1.println(resp);
               Serial.printf("[EQUIPE] recebi %s, respondi %s\n", cifrado.c_str(), resp.c_str());

@@ -22,6 +22,7 @@ Projeto do Trabalho de Conclusão de Curso de Vinicius Alves da Costa (Engenhari
 | `mestre/` | ESP32 dentro da caixa | Controla travas, tempo, tela e valida os desafios |
 | `aluno_modelo/` | Placa do aluno | Modelo que o aluno recebe; no desafio 3, a UART já vem pronta e falta só a função `decifrar()` |
 | `gabarito/` | Placa do aluno | Soluções dos 3 desafios, para testar a caixa |
+| `docs/roteiro_aplicacao.md` | (leitura) | Roteiro para o professor: preparação, conversa inicial, partida, conversa final e reinício |
 
 Bibliotecas do mestre: **ESP32Servo**, **Adafruit SSD1306** e **Adafruit GFX**. O LittleFS já vem no core do ESP32.
 
@@ -92,7 +93,7 @@ Se o reset acontecer, a partida em andamento se perde, mas o log gravado até al
 |---|---|---|
 | `boot` | vazio | O mestre ligou (só no Monitor Serial) |
 | `inicio` | vazio | O botão iniciou a partida |
-| `erro_d1` | frequência medida, em Hz (`;continua` quando o erro persiste) | Começou um episódio de frequência fora de 1,8 a 2,2 Hz, ou ele continua após 5 s |
+| `erro_d1` | frequência medida, em Hz, ou `sem_oscilacao` (`;continua` quando o erro persiste) | Começou um episódio de frequência fora de 1,8 a 2,2 Hz, ou o sinal parou por mais de 2 s depois de ter oscilado (pino fixo ou programa travado, sem bip); ou o erro continua após 5 s |
 | `erro_d2` | `dentro_low` ou `fora_high` | Começou um episódio de sinal incoerente com a faixa |
 | `erro_d3` | `atraso` ou `esperado=X;recebido=Y` | Resposta atrasada ou errada |
 | `dica` | `etapa-número da dica` | Dica pedida (desconta 3 minutos) |
@@ -120,11 +121,11 @@ A caixa sorteia um código de 5 letras maiúsculas a cada mensagem (26^5, cerca 
 
 ## Simulação no Wokwi
 
-A pasta `simulacao_wokwi/` tem o projeto para o simulador Wokwi (ESP32 DevKit V1), publicado em https://wokwi.com/projects/480636863090165761. Como o Wokwi não simula duas placas no mesmo projeto, a lógica do mestre roda no `loop()` e a placa da equipe roda numa tarefa FreeRTOS, ligadas por fios externos como no hardware real (GPIO 23 → 18, GPIO 4 → RX2, TX2 → GPIO 5). No Monitor Serial, os dígitos 0 a 8 escolhem o cenário da equipe e T reduz o tempo restante para 10 s.
+A pasta `simulacao_wokwi/` tem o projeto para o simulador Wokwi (ESP32 DevKit V1), publicado em https://wokwi.com/projects/480636863090165761. Como o Wokwi não simula duas placas no mesmo projeto, a lógica do mestre roda no `loop()` e a placa da equipe roda numa tarefa FreeRTOS, ligadas por fios externos como no hardware real (GPIO 23 → 18, GPIO 4 → RX2, TX2 → GPIO 5). No Monitor Serial, os dígitos 0 a 8 escolhem o cenário da equipe e T reduz o tempo restante para 10 s. Os cenários 1, 4 e 6 rodam o código do `gabarito.ino` sem alteração; a única adaptação é que a Serial2 do gabarito passa a ser a Serial1 da tarefa da equipe (pinos 5 e 4), porque os pinos 16 e 17 são do mestre. Os demais cenários simulam soluções erradas de propósito.
 
 Arquivos para criar no Wokwi: `sketch.ino`, `diagram.json`, `libraries.txt` e `partitions.csv`. Sem o `partitions.csv`, a tabela de partições padrão do Wokwi não tem a partição `spiffs` e o LittleFS não monta (o log continua no Monitor Serial). Na primeira execução o LittleFS informa "mount failed (-84)" e formata a partição; é o comportamento esperado.
 
 O potenciômetro do Wokwi vai de 0 a 1023 na interface; o valor 600 corresponde a cerca de 2400 no ADC, dentro da faixa do desafio 2.
 
-Os logs das partidas de teste estão em `simulacao_wokwi/resultados/`. A Figura de simulação está em `docs/figuras/simulacao_wokwi.png`.
+O resultado de cada caso de teste está em `simulacao_wokwi/resultados/casos_de_teste.md`, com os logs das partidas na mesma pasta.
 
