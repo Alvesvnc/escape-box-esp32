@@ -129,3 +129,7 @@ O potenciômetro do Wokwi vai de 0 a 1023 na interface; o valor 600 corresponde 
 
 O resultado de cada caso de teste está em `simulacao_wokwi/resultados/casos_de_teste.md`, com os logs das partidas na mesma pasta.
 
+
+## Licença
+
+O código (pastas `mestre/`, `aluno_modelo/`, `gabarito/` e `simulacao_wokwi/`) está sob a licença MIT, no arquivo `LICENSE`. A documentação, o roteiro de aplicação e as figuras (pasta `docs/` e este README) estão sob a licença Creative Commons Atribuição 4.0 Internacional (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/deed.pt_BR. Nos dois casos, o uso, a adaptação e a redistribuição são livres, desde que o crédito ao autor seja mantido.
